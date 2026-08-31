@@ -7,6 +7,8 @@ interface User {
   _id?: string;
   name: string;
   email: string;
+  age: number;
+  role: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,7 +20,6 @@ interface User {
   templateUrl: './users.html',
   styleUrl: './users.css'
 })
-
 export class UsersComponent implements OnInit {
   private http = inject(HttpClient);
 
@@ -29,6 +30,10 @@ export class UsersComponent implements OnInit {
   user: User = {
     name: '',
     email: '',
+    age: 0,
+    role: 'user',
+    createdAt: '',
+    updatedAt: '',
   };
 
   editingUserId: string | null = null;
@@ -38,7 +43,7 @@ export class UsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.getUsers();
-    console.log("Users component");
+    console.log('Users component');
   }
 
   getUsers(): void {
@@ -46,9 +51,10 @@ export class UsersComponent implements OnInit {
     this.error = '';
 
     this.http.get<User[]>(this.apiUrl).subscribe({
-      next: (users) => {
-        this.users = users;
+      next: (users: User[]) => {
+        this.users.push(...users);
         this.loading = false;
+
         console.log('this.users: ', this.users);
         console.log('this.loading: ', this.loading);
       },
@@ -61,26 +67,35 @@ export class UsersComponent implements OnInit {
   }
 
   createUser(): void {
-    if (!this.user.name.trim() || !this.user.email.trim()) {
+    if (
+      !this.user.name.trim() ||
+      !this.user.email.trim()
+    ) {
       this.error = 'Name and email are required.';
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.success = '';
 
     this.http.post<User>(this.apiUrl, this.user).subscribe({
       next: (user) => {
+
+        console.log("create user", user);
         this.users.unshift(user);
         this.resetForm();
 
         this.success = 'User created successfully.';
         this.loading = false;
+        this.getUsers();
       },
       error: (error) => {
         console.error(error);
+
         this.error =
           error.error?.message || 'Failed to create user.';
+
         this.loading = false;
       },
     });
@@ -92,6 +107,8 @@ export class UsersComponent implements OnInit {
     this.user = {
       name: user.name,
       email: user.email,
+      age: user.age,
+      role: user.role
     };
 
     this.error = '';
@@ -103,13 +120,17 @@ export class UsersComponent implements OnInit {
       return;
     }
 
-    if (!this.user.name.trim() || !this.user.email.trim()) {
+    if (
+      !this.user.name.trim() ||
+      !this.user.email.trim()
+    ) {
       this.error = 'Name and email are required.';
       return;
     }
 
     this.loading = true;
     this.error = '';
+    this.success = '';
 
     this.http
       .put<User>(
@@ -133,8 +154,10 @@ export class UsersComponent implements OnInit {
         },
         error: (error) => {
           console.error(error);
+
           this.error =
             error.error?.message || 'Failed to update user.';
+
           this.loading = false;
         },
       });
@@ -155,6 +178,7 @@ export class UsersComponent implements OnInit {
 
     this.loading = true;
     this.error = '';
+    this.success = '';
 
     this.http
       .delete(`${this.apiUrl}/${user._id}`)
@@ -169,8 +193,10 @@ export class UsersComponent implements OnInit {
         },
         error: (error) => {
           console.error(error);
+
           this.error =
             error.error?.message || 'Failed to delete user.';
+
           this.loading = false;
         },
       });
@@ -184,6 +210,8 @@ export class UsersComponent implements OnInit {
     this.user = {
       name: '',
       email: '',
+      age: 0,
+      role: 'user'
     };
 
     this.editingUserId = null;

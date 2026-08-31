@@ -37,11 +37,13 @@ const getUser = async (req, res) => {
 // POST /api/users
 const createUser = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, age, role } = req.body;
 
     const user = await User.create({
       name,
       email,
+      age,
+      role
     });
 
     res.status(201).json(user);
