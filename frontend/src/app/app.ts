@@ -1,30 +1,30 @@
 import { Component, OnInit, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [RouterOutlet],
   template: `
     <div style="text-align: center; margin-top: 50px;">
       <h1>MEAN Stack Environment Test</h1>
       <p>Backend Status: <strong>{{ statusMessage() }}</strong></p>
     </div>
-  `,
-  standalone: true
-})
 
+    <router-outlet></router-outlet>
+  `,
+})
 export class App implements OnInit {
   statusMessage = signal('');
-  status = '';
 
   ngOnInit() {
-    fetch('http://localhost:5001/api/health')
+    fetch('http://localhost:3000/api/health')
       .then(res => res.json())
       .then(data => {
-        console.log(data)
-        this.statusMessage.set('Connecting...');
-        this.status = data.status;
+        console.log(data);
 
-        console.log(this.status, 'this.status');
-        
+        this.statusMessage.set('Connecting...');
+
         setTimeout(() => {
           this.statusMessage.set('Connected');
         }, 1000);

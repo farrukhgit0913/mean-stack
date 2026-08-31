@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const userRoutes = require("./routes/userRoutes");
+const userRoutes = require('./routes/userRoutes');
+
 const app = express();
 
 // ===============================
@@ -17,6 +18,29 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// ===============================
+// Server Home Page
+// ===============================
+
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>MEAN Backend</title>
+      </head>
+      <body style="font-family: Arial; text-align: center; margin-top: 100px;">
+        <h1>🚀 MEAN Backend is Running</h1>
+        <p>Express server is running successfully.</p>
+        <p>Port: <strong>3000</strong></p>
+        <p>
+          <a href="/api/health">Check API Health</a>
+        </p>
+      </body>
+    </html>
+  `);
+});
 
 // ===============================
 // MongoDB
@@ -38,20 +62,19 @@ mongoose
 // Routes
 // ===============================
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'Backend running successfully!'
   });
 });
 
-app.use("/api/users", userRoutes);
+app.use('/api/users', userRoutes);
 
 // ===============================
 // Server
 // ===============================
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

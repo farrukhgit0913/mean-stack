@@ -17,7 +17,7 @@ export interface User {
 export class UserService {
   private http = inject(HttpClient);
 
-  private apiUrl = 'http://localhost:5000/api/users';
+  private apiUrl = 'http://localhost:3000/api/users';
 
   // GET /api/users
   getUsers(): Observable<User[]> {

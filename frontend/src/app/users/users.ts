@@ -22,7 +22,7 @@ interface User {
 export class UsersComponent implements OnInit {
   private http = inject(HttpClient);
 
-  private apiUrl = 'http://localhost:5000/api/users';
+  private apiUrl = 'http://localhost:3000/api/users';
 
   users: User[] = [];
 
@@ -38,6 +38,7 @@ export class UsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.getUsers();
+    console.log("Users component");
   }
 
   getUsers(): void {
