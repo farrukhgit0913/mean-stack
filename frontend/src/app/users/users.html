@@ -1,0 +1,148 @@
+<div class="users-container">
+
+  <h1>Users</h1>
+
+  <!-- Error -->
+  @if (error) {
+    <div class="alert error">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Success -->
+  @if (success) {
+    <div class="alert success">
+      {{ success }}
+    </div>
+  }
+
+  <!-- User Form -->
+  <div class="user-form">
+
+    <h2>
+      {{ editingUserId ? 'Edit User' : 'Create User' }}
+    </h2>
+
+    <form
+      (ngSubmit)="editingUserId ? updateUser() : createUser()"
+    >
+
+      <div>
+        <label for="name">Name</label>
+
+        <input
+          id="name"
+          type="text"
+          name="name"
+          [(ngModel)]="user.name"
+          placeholder="Enter name"
+        />
+      </div>
+
+      <div>
+        <label for="email">Email</label>
+
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="user.email"
+          placeholder="Enter email"
+        />
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading"
+      >
+        {{ editingUserId ? 'Update User' : 'Create User' }}
+      </button>
+
+      @if (editingUserId) {
+        <button
+          type="button"
+          (click)="cancelEdit()"
+        >
+          Cancel
+        </button>
+      }
+
+    </form>
+
+  </div>
+
+  <!-- Users List -->
+  <div class="users-list">
+
+    <h2>All Users</h2>
+
+    @if (loading && users.length === 0) {
+      <p>Loading users...</p>
+    }
+
+    @if (!loading && users.length === 0) {
+      <p>No users found.</p>
+    }
+
+    @if (users.length > 0) {
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          @for (user of users; track user._id) {
+
+            <tr>
+
+              <td>
+                {{ user.name }}
+              </td>
+
+              <td>
+                {{ user.email }}
+              </td>
+
+              <td>
+                {{ user.createdAt | date:'medium' }}
+              </td>
+
+              <td>
+
+                <button
+                  type="button"
+                  (click)="editUser(user)"
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  (click)="deleteUser(user)"
+                >
+                  Delete
+                </button>
+
+              </td>
+
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+
+    }
+
+  </div>
+
+</div>

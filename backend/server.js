@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
+const userRoutes = require("./routes/userRoutes");
 const app = express();
 
 // ===============================
@@ -45,23 +45,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Get users
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await mongoose.connection.db
-      .collection('users')
-      .find()
-      .toArray();
-
-    res.json(users);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: 'Failed to fetch users'
-    });
-  }
-});
+app.use("/api/users", userRoutes);
 
 // ===============================
 // Server
