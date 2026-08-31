@@ -1,7 +1,15 @@
-import { Component, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import {
+  HttpClient,
+  httpResource
+} from '@angular/common/http';
 
 interface User {
   _id?: string;
@@ -20,150 +28,183 @@ interface User {
   templateUrl: './users.html',
   styleUrl: './users.css'
 })
-export class UsersComponent implements OnInit {
+export class UsersComponent {
+
   private http = inject(HttpClient);
 
   private apiUrl = 'http://localhost:3000/api/users';
 
-  users: User[] = [];
+  // -----------------------------
+  // GET USERS - httpResource
+  // -----------------------------
 
-  user: User = {
+  usersResource = httpResource<User[]>(
+    () => this.apiUrl
+  );
+
+  // -----------------------------
+  // Form State
+  // -----------------------------
+
+  user = signal<User>({
     name: '',
     email: '',
     age: 0,
-    role: 'user',
-    createdAt: '',
-    updatedAt: '',
-  };
+    role: 'user'
+  });
 
-  editingUserId: string | null = null;
-  loading = false;
-  error = '';
-  success = '';
+  editingUserId = signal<string | null>(null);
 
-  ngOnInit(): void {
-    this.getUsers();
-    console.log('Users component');
-  }
+  error = signal('');
+  success = signal('');
 
-  getUsers(): void {
-    this.loading = true;
-    this.error = '';
+  // -----------------------------
+  // Computed
+  // -----------------------------
 
-    this.http.get<User[]>(this.apiUrl).subscribe({
-      next: (users: User[]) => {
-        this.users.push(...users);
-        this.loading = false;
+  users = computed(
+    () => this.usersResource.value() ?? []
+  );
 
-        console.log('this.users: ', this.users);
-        console.log('this.loading: ', this.loading);
-      },
-      error: (error) => {
-        console.error(error);
-        this.error = 'Failed to load users.';
-        this.loading = false;
-      },
-    });
-  }
+  loading = computed(
+    () => this.usersResource.isLoading()
+  );
+
+  isEditing = computed(
+    () => !!this.editingUserId()
+  );
+
+  // -----------------------------
+  // CREATE USER
+  // -----------------------------
 
   createUser(): void {
+
+    const currentUser = this.user();
+
     if (
-      !this.user.name.trim() ||
-      !this.user.email.trim()
+      !currentUser.name.trim() ||
+      !currentUser.email.trim()
     ) {
-      this.error = 'Name and email are required.';
+      this.error.set('Name and email are required.');
       return;
     }
 
-    this.loading = true;
-    this.error = '';
-    this.success = '';
+    this.error.set('');
+    this.success.set('');
 
-    this.http.post<User>(this.apiUrl, this.user).subscribe({
-      next: (user) => {
+    this.http
+      .post<User>(this.apiUrl, currentUser)
+      .subscribe({
 
-        console.log("create user", user);
-        this.users.unshift(user);
-        this.resetForm();
+        next: () => {
 
-        this.success = 'User created successfully.';
-        this.loading = false;
-        this.getUsers();
-      },
-      error: (error) => {
-        console.error(error);
+          // Reload GET resource
+          this.usersResource.reload();
 
-        this.error =
-          error.error?.message || 'Failed to create user.';
+          this.resetForm();
 
-        this.loading = false;
-      },
-    });
+          this.success.set(
+            'User created successfully.'
+          );
+        },
+
+        error: (error) => {
+          console.error(error);
+
+          this.error.set(
+            error.error?.message ||
+            'Failed to create user.'
+          );
+        }
+
+      });
   }
 
-  editUser(user: User): void {
-    this.editingUserId = user._id || null;
+  // -----------------------------
+  // EDIT USER
+  // -----------------------------
 
-    this.user = {
+  editUser(user: User): void {
+
+    this.editingUserId.set(
+      user._id ?? null
+    );
+
+    this.user.set({
       name: user.name,
       email: user.email,
       age: user.age,
       role: user.role
-    };
+    });
 
-    this.error = '';
-    this.success = '';
+    this.error.set('');
+    this.success.set('');
   }
 
+  // -----------------------------
+  // UPDATE USER
+  // -----------------------------
+
   updateUser(): void {
-    if (!this.editingUserId) {
+
+    const id = this.editingUserId();
+    const currentUser = this.user();
+
+    if (!id) {
       return;
     }
 
     if (
-      !this.user.name.trim() ||
-      !this.user.email.trim()
+      !currentUser.name.trim() ||
+      !currentUser.email.trim()
     ) {
-      this.error = 'Name and email are required.';
+      this.error.set(
+        'Name and email are required.'
+      );
       return;
     }
 
-    this.loading = true;
-    this.error = '';
-    this.success = '';
+    this.error.set('');
+    this.success.set('');
 
     this.http
       .put<User>(
-        `${this.apiUrl}/${this.editingUserId}`,
-        this.user
+        `${this.apiUrl}/${id}`,
+        currentUser
       )
       .subscribe({
-        next: (updatedUser) => {
-          const index = this.users.findIndex(
-            (user) => user._id === updatedUser._id
-          );
 
-          if (index !== -1) {
-            this.users[index] = updatedUser;
-          }
+        next: () => {
+
+          // Reload GET resource
+          this.usersResource.reload();
 
           this.resetForm();
 
-          this.success = 'User updated successfully.';
-          this.loading = false;
+          this.success.set(
+            'User updated successfully.'
+          );
         },
+
         error: (error) => {
           console.error(error);
 
-          this.error =
-            error.error?.message || 'Failed to update user.';
+          this.error.set(
+            error.error?.message ||
+            'Failed to update user.'
+          );
+        }
 
-          this.loading = false;
-        },
       });
   }
 
+  // -----------------------------
+  // DELETE USER
+  // -----------------------------
+
   deleteUser(user: User): void {
+
     if (!user._id) {
       return;
     }
@@ -176,44 +217,58 @@ export class UsersComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
-    this.error = '';
-    this.success = '';
+    this.error.set('');
+    this.success.set('');
 
     this.http
-      .delete(`${this.apiUrl}/${user._id}`)
+      .delete(
+        `${this.apiUrl}/${user._id}`
+      )
       .subscribe({
-        next: () => {
-          this.users = this.users.filter(
-            (item) => item._id !== user._id
-          );
 
-          this.success = 'User deleted successfully.';
-          this.loading = false;
+        next: () => {
+
+          // Reload GET resource
+          this.usersResource.reload();
+
+          this.success.set(
+            'User deleted successfully.'
+          );
         },
+
         error: (error) => {
           console.error(error);
 
-          this.error =
-            error.error?.message || 'Failed to delete user.';
+          this.error.set(
+            error.error?.message ||
+            'Failed to delete user.'
+          );
+        }
 
-          this.loading = false;
-        },
       });
   }
+
+  // -----------------------------
+  // CANCEL EDIT
+  // -----------------------------
 
   cancelEdit(): void {
     this.resetForm();
   }
 
+  // -----------------------------
+  // RESET FORM
+  // -----------------------------
+
   resetForm(): void {
-    this.user = {
+
+    this.user.set({
       name: '',
       email: '',
       age: 0,
       role: 'user'
-    };
+    });
 
-    this.editingUserId = null;
+    this.editingUserId.set(null);
   }
 }

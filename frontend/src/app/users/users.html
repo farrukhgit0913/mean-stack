@@ -3,16 +3,16 @@
   <h1>Users</h1>
 
   <!-- Error -->
-  @if (error) {
+  @if (error()) {
     <div class="alert error">
-      {{ error }}
+      {{ error() }}
     </div>
   }
 
   <!-- Success -->
-  @if (success) {
+  @if (success()) {
     <div class="alert success">
-      {{ success }}
+      {{ success() }}
     </div>
   }
 
@@ -20,11 +20,11 @@
   <div class="user-form">
 
     <h2>
-      {{ editingUserId ? 'Edit User' : 'Create User' }}
+      {{ isEditing() ? 'Edit User' : 'Create User' }}
     </h2>
 
     <form
-      (ngSubmit)="editingUserId ? updateUser() : createUser()"
+      (ngSubmit)="isEditing() ? updateUser() : createUser()"
     >
 
       <!-- Name -->
@@ -35,7 +35,11 @@
           id="name"
           type="text"
           name="name"
-          [(ngModel)]="user.name"
+          [ngModel]="user().name"
+          (ngModelChange)="user.update(value => ({
+            ...value,
+            name: $event
+          }))"
           placeholder="Enter name"
         />
       </div>
@@ -48,7 +52,11 @@
           id="email"
           type="email"
           name="email"
-          [(ngModel)]="user.email"
+          [ngModel]="user().email"
+          (ngModelChange)="user.update(value => ({
+            ...value,
+            email: $event
+          }))"
           placeholder="Enter email"
         />
       </div>
@@ -61,7 +69,11 @@
           id="age"
           type="number"
           name="age"
-          [(ngModel)]="user.age"
+          [ngModel]="user().age"
+          (ngModelChange)="user.update(value => ({
+            ...value,
+            age: +$event
+          }))"
           placeholder="Enter age"
           min="1"
           max="150"
@@ -75,21 +87,27 @@
         <select
           id="role"
           name="role"
-          [(ngModel)]="user.role"
+          [ngModel]="user().role"
+          (ngModelChange)="user.update(value => ({
+            ...value,
+            role: $event
+          }))"
         >
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </select>
       </div>
 
+      <!-- Submit -->
       <button
         type="submit"
-        [disabled]="loading"
+        [disabled]="usersResource.isLoading()"
       >
-        {{ editingUserId ? 'Update User' : 'Create User' }}
+        {{ isEditing() ? 'Update User' : 'Create User' }}
       </button>
 
-      @if (editingUserId) {
+      <!-- Cancel -->
+      @if (isEditing()) {
         <button
           type="button"
           (click)="cancelEdit()"
@@ -107,15 +125,29 @@
 
     <h2>All Users</h2>
 
-    @if (loading && users.length === 0) {
+    <!-- Loading -->
+    @if (usersResource.isLoading()) {
       <p>Loading users...</p>
     }
 
-    @if (!loading && users.length === 0) {
+    <!-- Error -->
+    @if (usersResource.error()) {
+      <div class="alert error">
+        Failed to load users.
+      </div>
+    }
+
+    <!-- Empty -->
+    @if (
+      !usersResource.isLoading() &&
+      !usersResource.error() &&
+      users().length === 0
+    ) {
       <p>No users found.</p>
     }
 
-    @if (users.length > 0) {
+    <!-- Users -->
+    @if (users().length > 0) {
 
       <table>
 
@@ -132,7 +164,7 @@
 
         <tbody>
 
-          @for (user of users; track user._id) {
+          @for (user of users(); track user._id) {
 
             <tr>
 
@@ -185,3 +217,5 @@
     }
 
   </div>
+
+</div>
