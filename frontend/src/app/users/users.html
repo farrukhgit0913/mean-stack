@@ -1,34 +1,61 @@
 <div class="users-container">
 
-  <h1>Users</h1>
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Users</h1>
+      <p>Manage users, roles and account information.</p>
+    </div>
 
-  <!-- Error -->
+    <div class="user-count">
+      <span>{{ users().length }}</span>
+      <small>Total Users</small>
+    </div>
+  </div>
+
+  <!-- Alerts -->
   @if (error()) {
     <div class="alert error">
-      {{ error() }}
+      <span class="alert-icon">!</span>
+      <span>{{ error() }}</span>
     </div>
   }
 
-  <!-- Success -->
   @if (success()) {
     <div class="alert success">
-      {{ success() }}
+      <span class="alert-icon">✓</span>
+      <span>{{ success() }}</span>
     </div>
   }
 
-  <!-- User Form -->
-  <div class="user-form">
+  <!-- Form Card -->
+  <div class="user-form card">
 
-    <h2>
-      {{ isEditing() ? 'Edit User' : 'Create User' }}
-    </h2>
+    <div class="card-header">
+      <div>
+        <h2>
+          {{ isEditing() ? 'Edit User' : 'Create User' }}
+        </h2>
+        <p>
+          {{ isEditing()
+            ? 'Update the user information below.'
+            : 'Add a new user to your application.'
+          }}
+        </p>
+      </div>
+
+      @if (isEditing()) {
+        <span class="editing-badge">Editing</span>
+      }
+    </div>
 
     <form
+      class="form-grid"
       (ngSubmit)="isEditing() ? updateUser() : createUser()"
     >
 
       <!-- Name -->
-      <div>
+      <div class="form-field">
         <label for="name">Name</label>
 
         <input
@@ -40,12 +67,12 @@
             ...value,
             name: $event
           }))"
-          placeholder="Enter name"
+          placeholder="Enter full name"
         />
       </div>
 
       <!-- Email -->
-      <div>
+      <div class="form-field">
         <label for="email">Email</label>
 
         <input
@@ -57,12 +84,12 @@
             ...value,
             email: $event
           }))"
-          placeholder="Enter email"
+          placeholder="Enter email address"
         />
       </div>
 
       <!-- Age -->
-      <div>
+      <div class="form-field">
         <label for="age">Age</label>
 
         <input
@@ -81,7 +108,7 @@
       </div>
 
       <!-- Role -->
-      <div>
+      <div class="form-field">
         <label for="role">Role</label>
 
         <select
@@ -98,42 +125,61 @@
         </select>
       </div>
 
-      <!-- Submit -->
-      <button
-        type="submit"
-        [disabled]="usersResource.isLoading()"
-      >
-        {{ isEditing() ? 'Update User' : 'Create User' }}
-      </button>
+      <!-- Actions -->
+      <div class="form-actions">
 
-      <!-- Cancel -->
-      @if (isEditing()) {
         <button
-          type="button"
-          (click)="cancelEdit()"
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="usersResource.isLoading()"
         >
-          Cancel
+          @if (usersResource.isLoading()) {
+            <span class="spinner"></span>
+          }
+
+          {{ isEditing() ? 'Update User' : 'Create User' }}
         </button>
-      }
+
+        @if (isEditing()) {
+          <button
+            class="btn btn-secondary"
+            type="button"
+            (click)="cancelEdit()"
+          >
+            Cancel
+          </button>
+        }
+
+      </div>
 
     </form>
 
   </div>
 
-  <!-- Users List -->
-  <div class="users-list">
+  <!-- Users Card -->
+  <div class="users-list card">
 
-    <h2>All Users</h2>
+    <div class="card-header">
+      <div>
+        <h2>All Users</h2>
+        <p>View and manage registered users.</p>
+      </div>
+    </div>
 
     <!-- Loading -->
     @if (usersResource.isLoading()) {
-      <p>Loading users...</p>
+      <div class="loading-state">
+        <span class="spinner large"></span>
+        <p>Loading users...</p>
+      </div>
     }
 
     <!-- Error -->
     @if (usersResource.error()) {
-      <div class="alert error">
-        Failed to load users.
+      <div class="empty-state error-state">
+        <div class="empty-icon">!</div>
+        <h3>Unable to load users</h3>
+        <p>Something went wrong while fetching the users.</p>
       </div>
     }
 
@@ -143,76 +189,116 @@
       !usersResource.error() &&
       users().length === 0
     ) {
-      <p>No users found.</p>
+      <div class="empty-state">
+        <div class="empty-icon">👤</div>
+        <h3>No users found</h3>
+        <p>Create your first user to get started.</p>
+      </div>
     }
 
     <!-- Users -->
     @if (users().length > 0) {
 
-      <table>
+      <div class="table-wrapper">
 
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Age</th>
-            <th>Role</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <table>
 
-        <tbody>
-
-          @for (user of users(); track user._id) {
-
+          <thead>
             <tr>
-
-              <td>
-                {{ user.name }}
-              </td>
-
-              <td>
-                {{ user.email }}
-              </td>
-
-              <td>
-                {{ user.age }}
-              </td>
-
-              <td>
-                {{ user.role }}
-              </td>
-
-              <td>
-                {{ user.createdAt | date:'medium' }}
-              </td>
-
-              <td>
-
-                <button
-                  type="button"
-                  (click)="editUser(user)"
-                >
-                  Edit
-                </button>
-
-                <button
-                  type="button"
-                  (click)="deleteUser(user)"
-                >
-                  Delete
-                </button>
-
-              </td>
-
+              <th>User</th>
+              <th>Email</th>
+              <th>Age</th>
+              <th>Role</th>
+              <th>Created</th>
+              <th class="actions-column">Actions</th>
             </tr>
+          </thead>
 
-          }
+          <tbody>
 
-        </tbody>
+            @for (user of users(); track user._id) {
 
-      </table>
+              <tr>
+
+                <!-- User -->
+                <td>
+                  <div class="user-info">
+                    <div class="avatar">
+                      {{ user.name.charAt(0).toUpperCase() }}
+                    </div>
+
+                    <div>
+                      <strong>{{ user.name }}</strong>
+                      <span>User ID: {{ user._id }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Email -->
+                <td>
+                  <span class="email">
+                    {{ user.email }}
+                  </span>
+                </td>
+
+                <!-- Age -->
+                <td>
+                  {{ user.age }}
+                </td>
+
+                <!-- Role -->
+                <td>
+                  <span
+                    class="role-badge"
+                    [class.admin]="user.role === 'admin'"
+                  >
+                    {{ user.role }}
+                  </span>
+                </td>
+
+                <!-- Created -->
+                <td>
+                  <span class="date">
+                    {{ user.createdAt | date:'mediumDate' }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td>
+
+                  <div class="row-actions">
+
+                    <button
+                      class="icon-btn edit"
+                      type="button"
+                      (click)="editUser(user)"
+                      title="Edit user"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      class="icon-btn delete"
+                      type="button"
+                      (click)="deleteUser(user)"
+                      title="Delete user"
+                    >
+                      Delete
+                    </button>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     }
 
